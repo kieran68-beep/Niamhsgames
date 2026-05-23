@@ -71,11 +71,7 @@
         btn.setAttribute('data-col', c);
         container.appendChild(btn);
       }
-      container.onclick = function(e) {
-        const btn = e.target.closest('.arrow-btn');
-        if (!btn || gameOver) return;
-        drop(parseInt(btn.getAttribute('data-col')));
-      });
+
     }
 
     function renderBoard() {
@@ -158,7 +154,11 @@
       }
       return null;
     }
-
+document.getElementById('arrows').onclick = function(e) {
+  const btn = e.target.closest('.arrow-btn');
+  if (!btn || gameOver) return;
+  drop(parseInt(btn.getAttribute('data-col')));
+};
     document.getElementById('reset-btn').addEventListener('click', init);
     init();
   </script>
