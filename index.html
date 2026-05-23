@@ -99,7 +99,7 @@
       }
       if (row === -1) return;
 
-      board[row][col] = currentPlayer === 1 ? 'red' : 'yellow';
+      board[row][col] = currentPlayer === 1 ? 'pink' : 'black';
       renderBoard();
 
       const win = checkWin(row, col);
@@ -128,7 +128,7 @@
     }
 
     function updateStatus() {
-      const color = currentPlayer === 1 ? 'red' : 'yellow';
+      const color = currentPlayer === 1 ? 'pink' : 'black';
       document.getElementById('status').textContent = 'Player ' + currentPlayer + ' — drop a ' + color + ' disc';
       document.getElementById('tag1').className = 'player-tag' + (currentPlayer === 1 ? ' active' : '');
       document.getElementById('tag2').className = 'player-tag' + (currentPlayer === 2 ? ' active' : '');
