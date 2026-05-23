@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Four in a Row</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background: #f4f4f4; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 2rem 1rem; }
+    .game-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    h1 { font-size: 24px; font-weight: 600; color: #222; }
+    .status-bar { font-size: 16px; font-weight: 500; color: #222; min-height: 28px; text-align: center; }
+    .players { display: flex; gap: 24px; }
+    .player-tag { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #888; padding: 6px 14px; border-radius: 8px; border: 1.5px solid transparent; }
+    .player-tag.active { color: #222; font-weight: 500; border-color: #aaa; }
+    .disc { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; }
+    .disc.red { background: #E24B4A; }
+    .disc.yellow { background: #EF9F27; }
+    .arrow-row { display: grid; grid-template-columns: repeat(7, 60px); gap: 8px; padding: 0 12px; }
+    .arrow-btn { width: 60px; height: 28px; background: none; border: none; cursor: pointer; font-size: 20px; color: #185FA5; border-radius: 8px; }
+    .arrow-btn:hover:not(:disabled) { background: #e8e8e8; }
+    .arrow-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+    .board { display: grid; grid-template-columns: repeat(7, 60px); gap: 8px; background: #185FA5; border-radius: 12px; padding: 12px; }
+    .cell { width: 60px; height: 60px; border-radius: 50%; }
+    .cell.empty { background: #f4f4f4; }
+    .cell.red { background: #E24B4A; }
+    .cell.yellow { background: #EF9F27; }
+    .cell.win { outline: 4px solid white; outline-offset: -4px; }
+    .reset-btn { font-size: 14px; padding: 8px 20px; border: 1px solid #aaa; border-radius: 8px; background: white; cursor: pointer; }
+    .reset-btn:hover { background: #e8e8e8; }
+  </style>
+</head>
+<body>
+  <div class="game-wrap">
+    <h1>Four in a Row</h1>
+    <div class="players">
+      <div class="player-tag active" id="tag1"><div class="disc red"></div> Player 1</div>
+      <div class="player-tag" id="tag2"><div class="disc yellow"></div> Player 2</div>
+    </div>
+    <div class="status-bar" id="status"></div>
+    <div class="arrow-row" id="arrows"></div>
+    <div class="board" id="board"></div>
+    <button class="reset-btn" id="reset-btn">New game</button>
+  </div>
+
+  <script>
+    const ROWS = 6, COLS = 7;
+    let board, currentPlayer, gameOver;
+
+    function init() {
+      board = [];
+      for (let r = 0; r < ROWS; r++) {
+        board[r] = [];
+        for (let c = 0; c < COLS; c++) board[r][c] = null;
+      }
+      currentPlayer = 1;
+      gameOver = false;
+      renderArrows();
+      renderBoard();
+      updateStatus();
+    }
+
+    function renderArrows() {
+      const container = document.getElementById('arrows');
+      container.innerHTML = '';
+      for (let c = 0; c < COLS; c++) {
+        const btn = document.createElement('button');
+        btn.className = 'arrow-btn';
+        btn.textContent = '▼';
+        btn.setAttribute('aria-label', 'Drop in column ' + (c + 1));
+        btn.setAttribute('data-col', c);
+        container.appendChild(btn);
+      }
+      container.addEventListener('click', function(e) {
+        const btn = e.target.closest('.arrow-btn');
+        if (!btn || gameOver) return;
+        drop(parseInt(btn.getAttribute('data-col')));
+      });
+    }
+
+    function renderBoard() {
+      const el = document.getElementById('board');
+      el.innerHTML = '';
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell ' + (board[r][c] ? board[r][c] : 'empty');
+          cell.id = 'c' + r + '_' + c;
+          el.appendChild(cell);
+        }
+      }
+    }
+
+    function drop(col) {
+      if (gameOver) return;
+      let row = -1;
+      for (let r = ROWS - 1; r >= 0; r--) {
+        if (!board[r][col]) { row = r; break; }
+      }
+      if (row === -1) return;
+
+      board[row][col] = currentPlayer === 1 ? 'red' : 'yellow';
+      renderBoard();
+
+      const win = checkWin(row, col);
+      if (win) {
+        win.forEach(function(pos) {
+          const cell = document.getElementById('c' + pos[0] + '_' + pos[1]);
+          if (cell) cell.classList.add('win');
+        });
+        document.getElementById('status').textContent = 'Player ' + currentPlayer + ' wins!';
+        gameOver = true;
+        disableArrows();
+        return;
+      }
+
+      let full = true;
+      for (let c = 0; c < COLS; c++) { if (!board[0][c]) { full = false; break; } }
+      if (full) {
+        document.getElementById('status').textContent = "It's a draw!";
+        gameOver = true;
+        disableArrows();
+        return;
+      }
+
+      currentPlayer = currentPlayer === 1 ? 2 : 1;
+      updateStatus();
+    }
+
+    function updateStatus() {
+      const color = currentPlayer === 1 ? 'red' : 'yellow';
+      document.getElementById('status').textContent = 'Player ' + currentPlayer + ' — drop a ' + color + ' disc';
+      document.getElementById('tag1').className = 'player-tag' + (currentPlayer === 1 ? ' active' : '');
+      document.getElementById('tag2').className = 'player-tag' + (currentPlayer === 2 ? ' active' : '');
+    }
+
+    function disableArrows() {
+      document.querySelectorAll('.arrow-btn').forEach(function(b) { b.disabled = true; });
+    }
+
+    function checkWin(r, c) {
+      const color = board[r][c];
+      const dirs = [[0,1],[1,0],[1,1],[1,-1]];
+      for (let d = 0; d < dirs.length; d++) {
+        const dr = dirs[d][0], dc = dirs[d][1];
+        const cells = [[r, c]];
+        for (let i = 1; i < 4; i++) {
+          const nr = r + dr*i, nc = c + dc*i;
+          if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && board[nr][nc] === color) cells.push([nr, nc]);
+          else break;
+        }
+        for (let i = 1; i < 4; i++) {
+          const nr = r - dr*i, nc = c - dc*i;
+          if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && board[nr][nc] === color) cells.push([nr, nc]);
+          else break;
+        }
+        if (cells.length >= 4) return cells.slice(0, 4);
+      }
+      return null;
+    }
+
+    document.getElementById('reset-btn').addEventListener('click', init);
+    init();
+  </script>
+</body>
+</html>
