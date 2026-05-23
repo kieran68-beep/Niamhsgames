@@ -71,7 +71,7 @@
         btn.setAttribute('data-col', c);
         container.appendChild(btn);
       }
-      container.addEventListener('click', function(e) {
+      container.onclick = function(e) {
         const btn = e.target.closest('.arrow-btn');
         if (!btn || gameOver) return;
         drop(parseInt(btn.getAttribute('data-col')));
